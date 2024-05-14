@@ -1,0 +1,43 @@
+const bip39 = require('bip39');
+const fs = require("fs");
+const ethers = require("ethers");
+
+let basePath = "m/44'/60'/0'/0";
+
+let dir = '/Users/fcihpy/Desktop/block_wallet/mnemonic/'
+let new_dir = '/Users/fcihpy/Desktop/block_wallet/mnemonic_proc/'
+// 将助记词，根据不同的链，生成对应的钱包地址,然后存入文件中
+const main = async () => {
+    // 遍历当前目录下的所有助记词文件
+    fs.readdirSync(dir).forEach(element => {
+        console.log(`读取文件 ${element}`)
+
+        let data = fs.readFileSync(dir + element, 'UTF-8');
+        let lines = data.split(/\r?\n/)
+        //按行读取每个文件的助记词
+        lines.forEach((mnemonic) => {
+            if (mnemonic.length == 0) {
+                fs.renameSync(dir + element, new_dir + element)
+            }
+            // 开始查询助记词
+            makeAddr(mnemonic, element)
+        });
+    });
+
+    function makeAddr(mnemonic, fileName) {
+        for (let i = 0; i < 3; i++) {
+            if (!bip39.validateMnemonic(mnemonic)) {
+                continue
+            }
+            // 创建HD钱包
+            const hdNode = ethers.utils.HDNode.fromMnemonic(mnemonic)
+
+            let hdNodeNew = hdNode.derivePath(basePath + "/" + i);
+            let walletNew = new ethers.Wallet(hdNodeNew.privateKey);
+            // console.log(walletNew.address)
+            // 将钱包地址写入文件
+            fs.appendFileSync('/Users/fcihpy/Desktop/block_wallet/eth_addr/' + fileName, walletNew.address + "\n");
+        }
+    }
+}
+main()

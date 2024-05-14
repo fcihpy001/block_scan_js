@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>钱包登录、充值demo</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"
+        type="application/javascript"></script>
+</head>
+
+<body>
+    
+    <br>
+    <div >
+        <button id="loginBtn" >钱包登录</button>
+        <p id="addr"></p>
+        <p id="chain"></p>
+    </div>
+    <br>
+
+    <div >
+        <button id="rechargeBtn">向平台充值10U</button>
+    </div> 
+    <br>
+    <div>
+        <input type="text" id="address" placeholder="请输入要查询的地址" style="width: 300px;">
+        <button id="balanceBtn" onclick="getBalance()">查询余额</button>
+    </div>
+    <div id="result"></div>
+    <br>
+    <div>
+        <div id="total"></div>
+    </div>  
+    <script >
+        document.getElementById("rechargeBtn").addEventListener("click", async() =>{
+            await recharge()
+        })
+        
+        async function recharge() {
+        
+            // 请求用户授权连接到 MetaMask
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+        
+            // 获取用户的钱包地址
+            var accounts = await window.ethereum.request({ method: 'eth_accounts' });
+
+           var send_address = accounts[0]
+           console.log(`sender address :${send_address}`)
+           var toplink_addr = "0x6F17FeF0499809cC3988a11e625e8FcFF1C4be29"
+           // var contractAddr = "0x47DED3798AF6c632Ee4cd4639C4A57e06dc17ce5"
+           var contractAddr = "0x4c562Ea094F2f990BB79E3194e33Fadd14C96BA9"
+           let abi = [
+               "function name() view returns (string)",
+               "function symbol() view returns (string)",
+               "function totalSupply() view returns (uint256)",
+               "function balanceOf(address) public view returns(uint)",
+               "function deposit() public payable",
+               "function transfer(address, uint) public returns (bool)",
+               "function withdraw(uint) public",
+               "event Transfer(address indexed from, address indexed to, uint value)",
+               "function approve(address spender, uint tokens) public returns (bool success)"
+           ];
+           var transfer_amount = ethers.utils.parseUnits('1.0',18)
+           // var provider = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
+           var provider = new ethers.providers.JsonRpcProvider("https://goerli.infura.io/v3/185ac6ce977d4a828c4d4445ce0cd770");
+
+           const signer = await provider.getSigner() 
+           console.log(signer)  
+           const usdtContract = new ethers.Contract(contractAddr,abi,provider)
+           const usdt_signer = usdtContract.connect(signer)
+console.log(usdt_signer)
+           const nonce = await provider.getTransactionCount(send_address);
+           console.log(nonce);
+           console.log(`合约地址: ${contractAddr}`)
+           const nameWETH = await usdtContract.name()
+           console.log(`名称: ${nameWETH}`)
+
+           //获取当前gas 价格
+   
+
+           //预测gaslimit
+
+           //const tx = await usdt_signer.transfer(toplink_addr, ethers.utils.formatUnits('5', 18))
+          // tx.wait()
+           //console.log(tx)
+          
+        
+           const tx = await  usdt_signer.transfer(toplink_addr, 5) 
+           tx.wait()
+           console.log(tx)
+
+        }
+      </script>
+    
+</body>
+</html>
